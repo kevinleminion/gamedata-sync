@@ -18,6 +18,7 @@ def update_manifest(emulator, new_hash): # only allows one thread in this block 
         manifest[emulator] = new_hash
         write_manifest_file(manifest)
 
+# check if X process is running
 def is_running(program_name):
     for process in psutil.process_iter(['name']):
         # seems complicated, but iterates through each open process.
@@ -26,6 +27,7 @@ def is_running(program_name):
             return True
     return False
 
+# monitor X process to see when it opens and when it closes
 def monitor_process(program_name):
     while True:
         # waiting for any emulator to open
@@ -44,11 +46,14 @@ def monitor_process(program_name):
 
             time.sleep(5) # effectively the same code, but to check if it has closed
 
+# uploading data to Azure
 def upload_data(azure_connection, target_file, to_write):
     file_client = azure_connection.get_file_client(target_file) # connect to the target file 
-    file_client.upload_file(to_write)
 
+    with open(to_write, "rb") as write_file:
+        file_client.upload_file(write_file)
 
+# pulling data from Azure
 def retrieve_data(azure_connection, target_file, to_read):
     file_client = azure_connection.get_file_client(target_file)
 

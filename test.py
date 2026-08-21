@@ -6,6 +6,8 @@ import psutil # mandatory for checking for open processes
 import time # for simple timer functionality
 from threading import Lock # so only one thread can write code at a time
 from azure.storage.fileshare import ShareClient # allow writing to an Azure File Share
+import json # allow for the creation of json files
+import argparse # allows the parsing of command line parameters
 
 save_path = Path("C:/Users/shado/Downloads")
 manifest_lock = Lock() # create a lock object
@@ -42,8 +44,31 @@ def monitor_process(program_name):
 
             time.sleep(5) # effectively the same code, but to check if it has closed
 
+def upload_data(azure_connection, target_file, to_write):
+    file_client = azure_connection.get_file_client(target_file) # connect to the target file 
+    file_client.upload_file(to_write)
+
+
+def retrieve_data(azure_connection, target_file, to_read):
+    file_client = azure_connection.get_file_client(target_file)
+
+    with open(to_read, "wb") as source_file: # open a file to write the remote data from
+        data = file_client.download_file() # download the file
+        data.readinto(source_file) # writes into source_file
+        return source_file
+
+
 connection_string = ""
 share_name = "storeddata"  # whatever you named it
+
+emulator_data = {
+    "PCSX2":{
+
+    },
+    "Dolphin":{
+
+    }
+}
 
 share = ShareClient.from_connection_string(connection_string, share_name) # connect to azure
 
@@ -53,11 +78,18 @@ for item in directory.list_directories_and_files():
 
 file_client = share.get_file_client("test.txt") # what the file is called remotely 
 
-with open("data.txt", "rb") as source_file:
-    file_client.upload_file(source_file) # write this to the remote file with the same name
+with open("data.txt", "wb") as source_file: # open a file to write the remote data from
+    data = file_client.download_file() # download the file
+    data.readinto(source_file) # writes into source_file
 
-print("upload complete")
-share.close()
+with open("data.txt", "rb") as source_file:
+    print(source_file.read())
+
+# with open("data.txt", "rb") as source_file: # simple write
+#     file_client.upload_file(source_file)
+
+# print("upload complete")
+# share.close()
 
 
 emulators = ["Dolphin.exe", "pcsx2-qt.exe"]

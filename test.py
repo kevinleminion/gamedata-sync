@@ -84,20 +84,22 @@ def retrieve_data(azure_connection, target_file, local_to_write):
         data.readinto(source_file) # writes into source_file
         return source_file
 
+def parse_config_file(config_file_path):
+    script_dir = Path(__file__).parent # get the directory of the script file
+    config_file_path = script_dir / config_file_path # get the full path to the config file
+
+    with open(config_file_path, "r") as config_file:
+        config_data = json.load(config_file)
+    return config_data
+
 
 ############################### ACTUAL CODE STARTS HERE ###############################
 
-connection_string = ""
-share_name = "storeddata"  # whatever you named it
+config_file = parse_config_file("config.json") # read the config file 
 
-emulator_data = {
-    "PCSX2":{
-
-    },
-    "Dolphin":{
-
-    }
-}
+connection_string = config_file["connection_string"] # your connection string goes here, private information, do not share it with anyone
+share_name = config_file["share_name"]  # name of the Azure File Share
+emulator_data = config_file["emulator_data"] # nested dictionary of emulator data
 
 share = ShareClient.from_connection_string(connection_string, share_name) # connect to azure
 

@@ -18,6 +18,16 @@ def update_manifest(emulator, new_hash): # only allows one thread in this block 
         manifest[emulator] = new_hash
         write_manifest_file(manifest)
 
+# determine the save_path based on emulator
+# not too complex, only required to differentiate between emulators
+def determine_save_path(emulator_file_path):
+    if "Dolphin" in emulator_file_path:
+        return Path("C:/Users/shado/Documents/Dolphin Emulator/Wii")
+    elif "pcsx2" in emulator_file_path:
+        return Path("C:/Users/shado/Documents/PCSX2/cheats")
+    else:
+        return save_path
+
 # check if X process is running
 def is_running(program_name):
     for process in psutil.process_iter(['name']):
@@ -28,13 +38,24 @@ def is_running(program_name):
     return False
 
 # monitor X process to see when it opens and when it closes
-def monitor_process(program_name):
+# needs a folder name to see which Azure folder to reach into
+# also needs the 'share' object to connect to Azure
+def monitor_process(program_name, folder_name, share):
     while True:
         # waiting for any emulator to open
         while True:
             if is_running(program_name):
-                print(program_name + " is running.")
+                try:
+                    directory_folder = share.get_directory_client(folder_name) # connect to the folder
+                    directory_folder.create_directory() # create the folder if it doesn't exist
+                except Exception as e: # folder already exists
+                    pass
+
+                retrieve_data(share, folder_name + "/data.txt", save_path / "data.txt") # retrieve the data from Azure
+                print(program_name + " was opened.")
+                print("Retrieved remote data from " + folder_name + ".")
                 break
+                
 
             time.sleep(5) #just waits 5 seconds before checking again
 
@@ -54,14 +75,17 @@ def upload_data(azure_connection, target_file, to_write):
         file_client.upload_file(write_file)
 
 # pulling data from Azure
-def retrieve_data(azure_connection, target_file, to_read):
+# to_write is the local file to write the remote data into
+def retrieve_data(azure_connection, target_file, local_to_write):
     file_client = azure_connection.get_file_client(target_file)
 
-    with open(to_read, "wb") as source_file: # open a file to write the remote data from
+    with open(local_to_write, "wb") as source_file: # open a file to write the remote data from
         data = file_client.download_file() # download the file
         data.readinto(source_file) # writes into source_file
         return source_file
 
+
+############################### ACTUAL CODE STARTS HERE ###############################
 
 connection_string = ""
 share_name = "storeddata"  # whatever you named it
@@ -97,11 +121,12 @@ with open("data.txt", "rb") as source_file:
 # share.close()
 
 
-emulators = ["Dolphin.exe", "pcsx2-qt.exe"]
+emulators = {"Dolphin.exe": "dolphin", 
+             "pcsx2-qt.exe": "pcsx2"}
 
 # with ThreadPoolExecutor() as executor:
-#     for emulator in emulators:
-#         executor.submit(monitor_process, emulator)
+#     for emulator, folder_name in emulators.items():
+#         executor.submit(monitor_process, emulator, folder_name, share)
 
 
 

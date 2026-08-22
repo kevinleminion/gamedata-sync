@@ -18,16 +18,6 @@ def update_manifest(emulator, new_hash): # only allows one thread in this block 
         manifest[emulator] = new_hash
         write_manifest_file(manifest)
 
-# determine the save_path based on emulator
-# not too complex, only required to differentiate between emulators
-def determine_save_path(emulator_file_path):
-    if "Dolphin" in emulator_file_path:
-        return Path("C:/Users/shado/Documents/Dolphin Emulator/Wii")
-    elif "pcsx2" in emulator_file_path:
-        return Path("C:/Users/shado/Documents/PCSX2/cheats")
-    else:
-        return save_path
-
 # check if X process is running
 def is_running(program_name):
     for process in psutil.process_iter(['name']):
@@ -92,6 +82,16 @@ def parse_config_file(config_file_path):
         config_data = json.load(config_file)
     return config_data
 
+# links a local save path to an emulator
+def determine_save_paths(emulator_dict):
+    file_paths = {} # dictionary
+
+    # for each key (emulator dictionary name),value (value list) tuple in the nested dictionary
+    # save the name of the emulator and the save path to the dictionary
+    for emulator_name, emulator_details in emulator_dict.items():
+        file_paths[emulator_name] = (emulator_details["local_save_path"])
+
+    return file_paths
 
 ############################### ACTUAL CODE STARTS HERE ###############################
 

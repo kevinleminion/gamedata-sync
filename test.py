@@ -101,13 +101,9 @@ connection_string = config_file["connection_string"] # your connection string go
 share_name = config_file["share_name"]  # name of the Azure File Share
 emulator_data = config_file["emulator_data"] # nested dictionary of emulator data
 
-share = ShareClient.from_connection_string(connection_string, share_name) # connect to azure
+azure_connection = ShareClient.from_connection_string(connection_string, share_name) # connect to azure
 
-directory = share.get_directory_client("")  # "" means the root of the share
-for item in directory.list_directories_and_files():
-    print(item) # print out everything in the directory (should be empty for now)
-
-file_client = share.get_file_client("test.txt") # what the file is called remotely 
+file_client = azure_connection.get_file_client("test.txt") # what the file is called remotely 
 
 with open("data.txt", "wb") as source_file: # open a file to write the remote data from
     data = file_client.download_file() # download the file
@@ -120,15 +116,11 @@ with open("data.txt", "rb") as source_file:
 #     file_client.upload_file(source_file)
 
 # print("upload complete")
-# share.close()
-
-
-emulators = {"Dolphin.exe": "dolphin", 
-             "pcsx2-qt.exe": "pcsx2"}
+# azure_connection.close()
 
 # with ThreadPoolExecutor() as executor:
 #     for emulator, folder_name in emulators.items():
-#         executor.submit(monitor_process, emulator, folder_name, share)
+#         executor.submit(monitor_process, emulator, folder_name, azure_connection)
 
 
 

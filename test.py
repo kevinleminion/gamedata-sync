@@ -99,18 +99,21 @@ config_file = parse_config_file("config.json") # read the config file
 
 connection_string = config_file["connection_string"] # your connection string goes here, private information, do not share it with anyone
 share_name = config_file["share_name"]  # name of the Azure File Share
-emulator_data = config_file["emulator_data"] # nested dictionary of emulator data
+emulator_data = config_file["emulators"] # nested dictionary of emulator data
+local_save_paths = determine_save_paths(config_file)
 
-azure_connection = ShareClient.from_connection_string(connection_string, share_name) # connect to azure
+print(config_file)
 
-file_client = azure_connection.get_file_client("test.txt") # what the file is called remotely 
+# azure_connection = ShareClient.from_connection_string(connection_string, share_name) # connect to azure
 
-with open("data.txt", "wb") as source_file: # open a file to write the remote data from
-    data = file_client.download_file() # download the file
-    data.readinto(source_file) # writes into source_file
+# file_client = azure_connection.get_file_client("test.txt") # what the file is called remotely 
 
-with open("data.txt", "rb") as source_file:
-    print(source_file.read())
+# with open("data.txt", "wb") as source_file: # open a file to write the remote data from
+#     data = file_client.download_file() # download the file
+#     data.readinto(source_file) # writes into source_file
+
+# with open("data.txt", "rb") as source_file:
+#     print(source_file.read())
 
 # with open("data.txt", "rb") as source_file: # simple write
 #     file_client.upload_file(source_file)

@@ -1,0 +1,16 @@
+{
+    "connection_string": "PASTE_YOUR_AZURE_CONNECTION_STRING_HERE",
+    "share_name": "PASTE_YOUR_FILE_SHARE_NAME_HERE",
+    "emulators": {
+        "dolphin": {
+            "process_name": "Dolphin.exe",
+            "local_save_path": "C:/path/to/your/dolphin/saves",
+            "remote_folder": "dolphin"
+        },
+        "pcsx2": {
+            "process_name": "pcsx2-qt.exe",
+            "local_save_path": "C:/path/to/your/pcsx2/memcards",
+            "remote_folder": "pcsx2"
+        }
+    }
+}

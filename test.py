@@ -82,16 +82,16 @@ def parse_config_file(config_file_path):
         config_data = json.load(config_file)
     return config_data
 
-# links a local save path to an emulator
-def determine_save_paths(emulator_dict):
-    file_paths = {} # dictionary
+# given all the folder paths from the JSON
+# loop through the directories associated with said paths
+def loop_through_directory(emulator_path):
+    folder = Path(emulator_path) # convert the string text to an actual path
 
-    # for each key (emulator dictionary name),value (value list) tuple in the nested dictionary
-    # save the name of the emulator and the save path to the dictionary
-    for emulator_name, emulator_details in emulator_dict.items():
-        file_paths[emulator_name] = (emulator_details["local_save_path"])
+    for file in folder.rglob("*"): # just print every item for now
+        print(file)
 
-    return file_paths
+def discover_remote_changes():
+    print("placeholder")
 
 ############################### ACTUAL CODE STARTS HERE ###############################
 
@@ -99,10 +99,13 @@ config_file = parse_config_file("config.json") # read the config file
 
 connection_string = config_file["connection_string"] # your connection string goes here, private information, do not share it with anyone
 share_name = config_file["share_name"]  # name of the Azure File Share
-emulator_data = config_file["emulators"] # nested dictionary of emulator data
-local_save_paths = determine_save_paths(config_file)
+emulator_list = config_file["emulators"] # nested dictionary of emulator data
 
-print(config_file)
+# Worth noting: Emulator data is broken into executable name, and then filepaths.
+
+for entry in emulator_list.values():
+    print(entry["process_name"])
+
 
 # azure_connection = ShareClient.from_connection_string(connection_string, share_name) # connect to azure
 

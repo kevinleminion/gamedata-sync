@@ -88,7 +88,7 @@ def loop_through_directory(emulator_path):
     folder = Path(emulator_path) # convert the string text to an actual path
 
     for file in folder.rglob("*"): # just print every item for now
-        if(file.is_file()): print(file) 
+        if file.is_file(): print(file) 
 
 def discover_remote_changes():
     print("placeholder")
@@ -106,9 +106,9 @@ emulator_list = config_file["emulators"] # nested dictionary of emulator data
 for entry_name, entry_details in emulator_list.items():
     file_path_dict = entry_details["local_save_path"] # each value is a list of dictionaries
 
-    for list_item in file_path_dict: # for each list entry print the remote and local paths
-        print(list_item["local"])
-        print(list_item["remote"])
+    for list_item in file_path_dict: # print every item in the directory 
+        loop_through_directory(list_item["local"]) 
+        loop_through_directory(list_item["remote"])
 
 
 # azure_connection = ShareClient.from_connection_string(connection_string, share_name) # connect to azure

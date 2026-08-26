@@ -83,6 +83,14 @@ def upload_data(azure_connection, target_file, to_write):
     with open(to_write, "rb") as write_file:
         file_client.upload_file(write_file)
 
+# function to go through each folder on the remote
+def iterate_through_remote(azure_connection, remote_path):
+    directory_handle = azure_connection.get_directory_client(remote_path) # start at the root of the directory
+
+    for entry in directory_handle.list_directories_and_files():
+        print(entry)
+
+
 # pulling data from Azure
 # to_write is the local file to write the remote data into
 def retrieve_data(azure_connection, target_file, local_to_write):
@@ -109,8 +117,8 @@ def loop_through_directory(emulator_path, remote_path, azure_connection):
     for file in folder.rglob("*"): # just print every item for now
         if file.is_file(): 
             full_remote_path = remote_path + "/" + file.relative_to(emulator_path).as_posix()
-            relative_path = file.relative_to(emulator_path)
-            remote_folder_only = remote_path + "/" + relative_path.parent.as_posix()
+            relative_path = file.relative_to(emulator_path) 
+            remote_folder_only = remote_path + "/" + relative_path.parent.as_posix() # CRITICAL: excludes the file itself, as that shouldn't be a directory
             # .relative_to() is important here because it filters out only the important paths
             # as_posix() forces the Path object to render with FORWARD slashes, not back slashes.
             create_remote_path(azure_connection, remote_folder_only)

@@ -84,11 +84,17 @@ def upload_data(azure_connection, target_file, to_write):
         file_client.upload_file(write_file)
 
 # function to go through each folder on the remote
-def iterate_through_remote(azure_connection, remote_path):
+def iterate_through_remote(azure_connection, remote_path, local_path):
+    # needs to take the current path to determine where to write the file
     directory_handle = azure_connection.get_directory_client(remote_path) # start at the root of the directory
 
     for entry in directory_handle.list_directories_and_files():
-        print(entry)
+        if entry["is_directory"]:
+            iterate_through_remote(azure_connection, remote_path + "/" + entry["name"], local_path + "/" + entry["name"])
+            # important to also include a local directory to write to
+        else:
+            retrieve_data(azure_connection, remote_path + "/" + entry["name"], local_path + "/" + entry["name"])
+            # NOTE FOR LATER: WE NEED TO CREATE THE LOCAL DIRECTORY IF IT DOESNT ALREADY EXIST!
 
 
 # pulling data from Azure

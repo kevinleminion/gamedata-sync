@@ -90,11 +90,12 @@ def iterate_through_remote(azure_connection, remote_path, local_path):
 
     for entry in directory_handle.list_directories_and_files():
         if entry["is_directory"]:
+            Path(local_path + "/" + entry["name"]).mkdir(parents = True, exist_ok = True) # create the matching path on the local device
             iterate_through_remote(azure_connection, remote_path + "/" + entry["name"], local_path + "/" + entry["name"])
             # important to also include a local directory to write to
         else:
             retrieve_data(azure_connection, remote_path + "/" + entry["name"], local_path + "/" + entry["name"])
-            # NOTE FOR LATER: WE NEED TO CREATE THE LOCAL DIRECTORY IF IT DOESNT ALREADY EXIST!
+            
 
 
 # pulling data from Azure
@@ -153,11 +154,6 @@ for entry_name, entry_details in emulator_list.items():
     for list_item in file_path_dict: # print every item in the directory 
         loop_through_directory(list_item["local"], list_item["remote"], azure_connection) 
 
-
-
-# with open("data.txt", "wb") as source_file: # open a file to write the remote data from
-#     data = file_client.download_file() # download the file
-#     data.readinto(source_file) # writes into source_file
 
 # with open("data.txt", "rb") as source_file:
 #     print(source_file.read())

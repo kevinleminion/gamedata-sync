@@ -28,13 +28,14 @@ def is_running(program_name):
     return False
 
 # monitor X process to see when it opens and when it closes
-# needs a folder name to see which Azure folder to reach into
+# needs a list of folders to push/pull to
 # also needs the 'azure_connection' object to connect to Azure
-def monitor_process(program_name, folder_name, azure_connection):
+def monitor_process(program_name, folders_to_pull, azure_connection):
     while True:
         # waiting for any emulator to open
         while True:
             if is_running(program_name):
+                # pull remote data on startup
                 try:
                     directory_folder = azure_connection.get_directory_client(folder_name) # connect to the folder
                     directory_folder.create_directory() # create the folder if it doesn't exist
@@ -74,7 +75,14 @@ def create_remote_path(azure_connection, remote_path):
             azure_directory.create_directory() # use the client handle to create a path
         except Exception:
             pass
-        
+
+# pushes everything in the "to-monitor" folders to Azure
+def push_to_remote(azure_connection, emulator_dictionary):       
+    for entry_name, entry_details in emulator_dictionary.items():
+        file_path_dict = entry_details["local_save_path"] # each value is a list of dictionaries
+
+        for list_item in file_path_dict: # print every item in the directory 
+            loop_through_directory(list_item["local"], list_item["remote"], azure_connection) 
 
 # uploading data to Azure
 def upload_data(azure_connection, target_file, to_write):
@@ -82,6 +90,21 @@ def upload_data(azure_connection, target_file, to_write):
 
     with open(to_write, "rb") as write_file:
         file_client.upload_file(write_file)
+
+# given all the folder paths from the JSON
+# loop through the directories associated with said paths
+def loop_through_directory(emulator_path, remote_path, azure_connection):
+    folder = Path(emulator_path) # convert the string text to an actual path
+
+    for file in folder.rglob("*"): # just print every item for now
+        if file.is_file(): 
+            full_remote_path = remote_path + "/" + file.relative_to(emulator_path).as_posix()
+            relative_path = file.relative_to(emulator_path) 
+            remote_folder_only = remote_path + "/" + relative_path.parent.as_posix() # CRITICAL: excludes the file itself, as that shouldn't be a directory
+            # .relative_to() is important here because it filters out only the important paths
+            # as_posix() forces the Path object to render with FORWARD slashes, not back slashes.
+            create_remote_path(azure_connection, remote_folder_only)
+            upload_data(azure_connection, full_remote_path, file) # test uploading the data
 
 # function to go through each folder on the remote
 def iterate_through_remote(azure_connection, remote_path, local_path):
@@ -95,8 +118,6 @@ def iterate_through_remote(azure_connection, remote_path, local_path):
             # important to also include a local directory to write to
         else:
             retrieve_data(azure_connection, remote_path + "/" + entry["name"], local_path + "/" + entry["name"])
-            
-
 
 # pulling data from Azure
 # to_write is the local file to write the remote data into
@@ -116,20 +137,7 @@ def parse_config_file(config_file_path):
         config_data = json.load(config_file)
     return config_data
 
-# given all the folder paths from the JSON
-# loop through the directories associated with said paths
-def loop_through_directory(emulator_path, remote_path, azure_connection):
-    folder = Path(emulator_path) # convert the string text to an actual path
 
-    for file in folder.rglob("*"): # just print every item for now
-        if file.is_file(): 
-            full_remote_path = remote_path + "/" + file.relative_to(emulator_path).as_posix()
-            relative_path = file.relative_to(emulator_path) 
-            remote_folder_only = remote_path + "/" + relative_path.parent.as_posix() # CRITICAL: excludes the file itself, as that shouldn't be a directory
-            # .relative_to() is important here because it filters out only the important paths
-            # as_posix() forces the Path object to render with FORWARD slashes, not back slashes.
-            create_remote_path(azure_connection, remote_folder_only)
-            upload_data(azure_connection, full_remote_path, file) # test uploading the data
 
 
 def discover_remote_changes():
@@ -148,25 +156,23 @@ azure_connection = ShareClient.from_connection_string(connection_string, share_n
 
 # Worth noting: Emulator data is broken into executable name, and then filepaths.
 
-for entry_name, entry_details in emulator_list.items():
-    file_path_dict = entry_details["local_save_path"] # each value is a list of dictionaries
+# for dictionary_keys, dictionary_values in emulator_list.items():
+#     for entry in dictionary_values["local_save_path"]: # iterate through the list 
+#         print(entry["local"])
+#         print(entry["remote"])
 
-    for list_item in file_path_dict: # print every item in the directory 
-        loop_through_directory(list_item["local"], list_item["remote"], azure_connection) 
+for emulators in emulator_list:
+    print(emulators)
 
-
-# with open("data.txt", "rb") as source_file:
-#     print(source_file.read())
-
-# with open("data.txt", "rb") as source_file: # simple write
-#     file_client.upload_file(source_file)
-
-# print("upload complete")
-# azure_connection.close()
+#push_to_remote(azure_connection, emulator_list)
 
 # with ThreadPoolExecutor() as executor:
 #     for emulator, folder_name in emulators.items():
 #         executor.submit(monitor_process, emulator, folder_name, azure_connection)
+
+# azure_connection.close()
+
+
 
 
 

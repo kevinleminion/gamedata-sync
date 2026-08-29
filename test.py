@@ -28,23 +28,26 @@ def is_running(program_name):
     return False
 
 # monitor X process to see when it opens and when it closes
-# needs a list of folders to push/pull to
+# needs a nested dictionary of information
 # also needs the 'azure_connection' object to connect to Azure
-def monitor_process(program_name, folders_to_pull, azure_connection):
+def monitor_process(program_detail_dict, azure_connection):
+    ############ initial setup, grabbing all the needed parameters #################
+    exec_name = program_detail_dict["process_name"] # grabs the executable name
+    local_path_list = [] # list for local paths
+    remote_path_list = [] # list for remote paths
+    
+    for entry in program_detail_dict["local_save_path"]:
+        local_path_list.append(entry["local"]) # fill in the lists, nothing too complex
+        remote_path_list.append(entry["remote"])
+
     while True:
         # waiting for any emulator to open
         while True:
-            if is_running(program_name):
+            if is_running(exec_name):
                 # pull remote data on startup
-                try:
-                    directory_folder = azure_connection.get_directory_client(folder_name) # connect to the folder
-                    directory_folder.create_directory() # create the folder if it doesn't exist
-                except Exception as e: # folder already exists
-                    pass
+                for item in remote_path_list:
+                    retrieve_data(azure_connection, item)
 
-                retrieve_data(azure_connection, folder_name + "/data.txt", save_path / "data.txt") # retrieve the data from Azure
-                print(program_name + " was opened.")
-                print("Retrieved remote data from " + folder_name + ".")
                 break
                 
 
@@ -52,8 +55,8 @@ def monitor_process(program_name, folders_to_pull, azure_connection):
 
         # waiting for the emulator to close
         while True:
-            if not is_running(program_name):
-                print(program_name + " was closed.")
+            if not is_running(exec_name):
+                print(exec_name + " was closed.")
                 break
 
             time.sleep(5) # effectively the same code, but to check if it has closed
@@ -156,13 +159,10 @@ azure_connection = ShareClient.from_connection_string(connection_string, share_n
 
 # Worth noting: Emulator data is broken into executable name, and then filepaths.
 
-# for dictionary_keys, dictionary_values in emulator_list.items():
-#     for entry in dictionary_values["local_save_path"]: # iterate through the list 
-#         print(entry["local"])
-#         print(entry["remote"])
+for dictionary_keys, dictionary_values in emulator_list.items():
+    for entry in dictionary_values["local_save_path"]: # iterate through the list 
+        print(entry["remote"])
 
-for emulators in emulator_list:
-    print(emulators)
 
 #push_to_remote(azure_connection, emulator_list)
 

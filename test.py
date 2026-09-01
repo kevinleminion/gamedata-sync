@@ -9,14 +9,7 @@ from azure.storage.fileshare import ShareClient # allow writing to an Azure File
 import json # allow for the creation of json files
 import argparse # allows the parsing of command line parameters
 
-save_path = Path("C:/Users/shado/Downloads")
-manifest_lock = Lock() # create a lock object
 
-def update_manifest(emulator, new_hash): # only allows one thread in this block at once
-    with manifest_lock:
-        manifest = read_manifest_file()
-        manifest[emulator] = new_hash
-        write_manifest_file(manifest)
 
 # check if X process is running
 def is_running(program_name):
@@ -140,14 +133,23 @@ def parse_config_file(config_file_path):
         config_data = json.load(config_file)
     return config_data
 
+# updates the manifest file with any new hashes
+def update_manifest(emulator, new_hash, manifest_lock): # manifest_lock only allows one thread in this block at once
+    with manifest_lock:
+        manifest = read_manifest_file()
+        manifest[emulator] = new_hash
+        write_manifest_file(manifest)
 
+# reads the manifest file, 
+def read_manifest_file():
+    print("placeholder")
 
 
 def discover_remote_changes():
     print("placeholder")
 
 ############################### ACTUAL CODE STARTS HERE ###############################
-
+manifest_lock = Lock() # create a lock object
 config_file = parse_config_file("config.json") # read the config file 
 
 connection_string = config_file["connection_string"] # your connection string goes here, private information, do not share it with anyone
@@ -167,8 +169,8 @@ for dictionary_keys, dictionary_values in emulator_list.items():
 #push_to_remote(azure_connection, emulator_list)
 
 # with ThreadPoolExecutor() as executor:
-#     for emulator, folder_name in emulators.items():
-#         executor.submit(monitor_process, emulator, folder_name, azure_connection)
+#     for emulator_name, emulator_details in emulator_list.items():
+#         executor.submit(monitor_process, emulator_details, azure_connection)
 
 # azure_connection.close()
 

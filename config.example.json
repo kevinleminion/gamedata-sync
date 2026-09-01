@@ -4,13 +4,17 @@
     "emulators": {
         "dolphin": {
             "process_name": "Dolphin.exe",
-            "local_save_path": "C:/path/to/your/dolphin/saves",
-            "remote_folder": "dolphin"
+            "local_save_path": [
+                {"local": "C:/path/to/your/dolphin/save/folders", "remote": "path/to/your/remote/folder"},
+                {"local": "C:/path/to/another/dolphin/save/folder", "remote": "path/to/equivalent/folder"}
+            ]
         },
         "pcsx2": {
             "process_name": "pcsx2-qt.exe",
-            "local_save_path": "C:/path/to/your/pcsx2/memcards",
-            "remote_folder": "pcsx2"
+            "local_save_path": [
+                {"local": "C:/path/to/your/pcsx2/memcard/folders", "remote": "path/to/your/remote/folder"},
+                {"local": "C:/path/to/your/pcsx2/savestate/folder", "remote": "path/to/equivalent/folder"}
+            ]
         }
     }
 }

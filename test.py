@@ -141,11 +141,23 @@ def update_manifest(emulator, new_hash, manifest_lock): # manifest_lock only all
         write_manifest_file(manifest)
 
 # reads the manifest file, 
-def read_manifest_file():
-    print("placeholder")
+def read_manifest(manifest_path):
+        script_dir = Path(__file__).parent # get the directory of the script file
+        manifest_file_path = script_dir / manifest_path # get the full path to the config file
+
+        with open(manifest_file_path, "r") as manifest_file:
+            manifest_data = json.load(manifest_file)
+
+        for entry in manifest_data["data_entries"]:
+            for filepath, info in entry.items():
+                timestamp, hash_value = info # assign info to multiple variables
+                print(filepath)
+            
+
+        
 
 
-def discover_remote_changes():
+def compare_remote_local():
     print("placeholder")
 
 ############################### ACTUAL CODE STARTS HERE ###############################
@@ -161,9 +173,11 @@ azure_connection = ShareClient.from_connection_string(connection_string, share_n
 
 # Worth noting: Emulator data is broken into executable name, and then filepaths.
 
-for dictionary_keys, dictionary_values in emulator_list.items():
-    for entry in dictionary_values["local_save_path"]: # iterate through the list 
-        print(entry["remote"])
+# for dictionary_keys, dictionary_values in emulator_list.items():
+#     for entry in dictionary_values["local_save_path"]: # iterate through the list 
+#         print(entry["remote"])
+
+read_manifest("manifest.json")
 
 
 #push_to_remote(azure_connection, emulator_list)

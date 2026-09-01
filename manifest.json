@@ -1,55 +1,55 @@
 {
     "data_entries": [
         {
-            "52464545\\content\\title.tmd": [
+            "52464545/content/title.tmd": [
                 1787592162.3057237,
                 "752bc029e732b3d7d3839aa9a856ff50364e726106abbc1a2e3ddc579d49e0eb"
             ]
         },
         {
-            "52464545\\data\\banner.bin": [
+            "52464545/data/banner.bin": [
                 1787592232.0072334,
                 "7258d67f326b7839db4e9140ff6a1af6516637fdb636a0f646c29742a3384632"
             ]
         },
         {
-            "52464545\\data\\FE10_US.dat": [
+            "52464545/data/FE10_US.dat": [
                 1787592233.632231,
                 "3e314afd2fcd8ff29c2c406ccfd6eef498f5a131f6d971f03b77ba770d493200"
             ]
         },
         {
-            "00555045\\content\\title.tmd": [
+            "00555045/content/title.tmd": [
                 1787592253.1499689,
                 "44589447a121bf59c26bbad75e6743eeb93bab33d99ccc86d15581c2c1f7aca8"
             ]
         },
         {
-            "524d4345\\content\\title.tmd": [
+            "524d4345/content/title.tmd": [
                 1739066323.190153,
                 "bbd9071b8f24f38a7e9ff9b35975e1c742e04be5546de02c83cad0eec3cf24dc"
             ]
         },
         {
-            "524d4345\\data\\banner.bin": [
+            "524d4345/data/banner.bin": [
                 1787547716.4265141,
                 "7186f3251a44afedeb0d80baf6e45c5529165d2c9089380cfa6b1b4530324398"
             ]
         },
         {
-            "524d4345\\data\\rksys.dat": [
+            "524d4345/data/rksys.dat": [
                 1787547716.3678257,
                 "4f7feb0fe8c69954369961f42415179668403cdc3ceafc98a2ba6dc719129260"
             ]
         },
         {
-            "524d4345\\data\\wc24dl.vff": [
+            "524d4345/data/wc24dl.vff": [
                 1739066332.2969017,
                 "a335b20840872e684bdf1d0fb16500423039564596b6e3310d0087c74e330f17"
             ]
         },
         {
-            "524d4345\\data\\wc24scr.vff": [
+            "524d4345/data/wc24scr.vff": [
                 1787547706.247092,
                 "ab52d2da0b063ed40f0aed65eb3ed0cabc5e4d58114c6a86cfd72a29b6e498c1"
             ]
@@ -61,19 +61,19 @@
             ]
         },
         {
-            "USA\\Card A\\01-GYBE-MainData.gci": [
+            "USA/Card A/01-GYBE-MainData.gci": [
                 1738898947.8854504,
                 "bc635f33dfbcb2cd06d2166ef8ae18e6322d4bc273c3fc62833d235be443087f"
             ]
         },
         {
-            "USA\\Card A\\01-GYBE-MARIPAR7.gci": [
+            "USA/Card A/01-GYBE-MARIPAR7.gci": [
                 1739863856.03003,
                 "45747c6855674cef03c35e2369c8e940daef599dc3ec9a09e5d70d53d852e8da"
             ]
         },
         {
-            "USA\\Card A\\01-GZ2E-gczelda2.gci": [
+            "USA/Card A/01-GZ2E-gczelda2.gci": [
                 1787592646.7691422,
                 "cca503cc0d512f213969ebd7dd8a09a9c8855c91ee3cf49522660dea5de8ffb5"
             ]

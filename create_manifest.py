@@ -21,7 +21,7 @@ def iterate_through_local(file_path):
             with open(file, "rb") as file_to_hash:
                 file_data = file_to_hash.read()
     
-            relative_path = str(file.relative_to(directory)) # get the relative path, NEEDS to be a string
+            relative_path = str(file.relative_to(directory).as_posix()) # get the relative path, NEEDS to be a string
             timestamp = os.path.getmtime(file) # timestamp the file
             file_hash = hashlib.sha256(file_data).hexdigest() # hash the file, then turn it into a string
 

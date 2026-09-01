@@ -118,12 +118,16 @@ def iterate_through_remote(azure_connection, remote_path, local_path):
 # pulling data from Azure
 # to_write is the local file to write the remote data into
 def retrieve_data(azure_connection, target_file, local_to_write):
-    file_client = azure_connection.get_file_client(target_file)
+    try:
+        file_client = azure_connection.get_file_client(target_file)
 
-    with open(local_to_write, "wb") as source_file: # open a file to write the remote data from
-        data = file_client.download_file() # download the file
-        data.readinto(source_file) # writes into source_file
-        return source_file
+        with open(local_to_write, "wb") as source_file: # open a file to write the remote data from
+            data = file_client.download_file() # download the file
+            data.readinto(source_file) # writes into source_file
+        return True
+        
+    except Exception:
+        return False 
 
 def parse_config_file(config_file_path):
     script_dir = Path(__file__).parent # get the directory of the script file
@@ -141,20 +145,27 @@ def update_manifest(emulator, new_hash, manifest_lock): # manifest_lock only all
         write_manifest_file(manifest)
 
 # reads the manifest file, 
-def read_manifest(manifest_path):
+def read_manifest(manifest_path, azure_connection):
         script_dir = Path(__file__).parent # get the directory of the script file
         manifest_file_path = script_dir / manifest_path # get the full path to the config file
 
+        if not (retrieve_data(azure_connection, "manifest.json", "remote_manifest.json")):
+            print("remote folder doesn't exist, placeholder for now")
+        
+        # download the remote manifest into a temporary file 
+
         with open(manifest_file_path, "r") as manifest_file:
             manifest_data = json.load(manifest_file)
+
+        with open(remote_manifest, "r") as remote_manifest_file: # loading the remote one as well
+            remote_manifest_data = json.load(remote_manifest_file)
+
 
         for entry in manifest_data["data_entries"]:
             for filepath, info in entry.items():
                 timestamp, hash_value = info # assign info to multiple variables
                 print(filepath)
-            
-
-        
+                
 
 
 def compare_remote_local():
@@ -177,7 +188,7 @@ azure_connection = ShareClient.from_connection_string(connection_string, share_n
 #     for entry in dictionary_values["local_save_path"]: # iterate through the list 
 #         print(entry["remote"])
 
-read_manifest("manifest.json")
+read_manifest("manifest.json", azure_connection)
 
 
 #push_to_remote(azure_connection, emulator_list)

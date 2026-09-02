@@ -149,22 +149,31 @@ def read_manifest(manifest_path, azure_connection):
         script_dir = Path(__file__).parent # get the directory of the script file
         manifest_file_path = script_dir / manifest_path # get the full path to the config file
 
-        if not (retrieve_data(azure_connection, "manifest.json", "remote_manifest.json")):
+        if not (retrieve_data(azure_connection, "manifest.json", "remote_manifest.json")): # download the remote manifest into a temporary file 
             print("remote folder doesn't exist, placeholder for now")
         
-        # download the remote manifest into a temporary file 
-
-        with open(manifest_file_path, "r") as manifest_file:
-            manifest_data = json.load(manifest_file)
-
-        with open(remote_manifest, "r") as remote_manifest_file: # loading the remote one as well
+        with open(manifest_file_path, "r") as manifest_file: # load the local remote file
+            local_manifest_data = json.load(manifest_file)
+        with open("remote_manifest.json", "r") as remote_manifest_file: # loading the remote one as well
             remote_manifest_data = json.load(remote_manifest_file)
 
+        for relative_path, current_info in local_manifest_data.items(): # grab info of each local entry
+            if relative_path in remote_manifest_data:
+                remote_info = remote_manifest_data[relative_path] # enter the dictionary of the related entry
+                remote_timestamp = remote_info["timestamp"]
+                remote_hash = remote_info["hash"] # grab appropriate information for the remote equivalent
 
-        for entry in manifest_data["data_entries"]:
-            for filepath, info in entry.items():
-                timestamp, hash_value = info # assign info to multiple variables
-                print(filepath)
+                if current_info["hash"] != remote_hash: # hash difference, main part
+                    if current_info["timestamp"] < remote_timestamp: # remote is more recent
+                        retrieve_data(azure_connection, relative_path, )
+                    else: # local is more recent
+                        upload_data(azure_connection, relative_path, )
+
+            else:
+                continue # not in remote manifest, should be updated on next manifest update
+                
+
+                
                 
 
 

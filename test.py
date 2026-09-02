@@ -166,11 +166,15 @@ def read_manifest(manifest_path, azure_connection):
                 if current_info["hash"] != remote_hash: # hash difference, main part
                     if current_info["timestamp"] < remote_timestamp: # remote is more recent
                         retrieve_data(azure_connection, relative_path, )
-                    else: # local is more recent
+                    else: # local is more recent 
+                        file_parent = str(Path(relative_path).parent.as_posix()) # don't want a directory for the file
+                        create_remote_path(azure_connection, file_parent) # just make sure the path exists 
                         upload_data(azure_connection, relative_path, )
 
             else:
-                continue # not in remote manifest, should be updated on next manifest update
+                file_parent = str(Path(relative_path).parent.as_posix()) # don't want a directory for the file
+                create_remote_path(azure_connection, file_parent) # not in remote manifest, file should be uploaded 
+                upload_data(azure_connection, relative_path, )
                 
 
                 

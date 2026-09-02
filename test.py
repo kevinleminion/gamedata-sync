@@ -145,7 +145,7 @@ def update_manifest(emulator, new_hash, manifest_lock): # manifest_lock only all
         write_manifest_file(manifest)
 
 # reads the manifest file, 
-def read_manifest(manifest_path, azure_connection):
+def read_manifest(manifest_path, azure_connection, config_file):
         script_dir = Path(__file__).parent # get the directory of the script file
         manifest_file_path = script_dir / manifest_path # get the full path to the config file
 
@@ -158,28 +158,38 @@ def read_manifest(manifest_path, azure_connection):
             remote_manifest_data = json.load(remote_manifest_file)
 
         for relative_path, current_info in local_manifest_data.items(): # grab info of each local entry
+            remote_info = remote_manifest_data[relative_path] # enter the dictionary of the related entry
+            remote_base = remote_info["remote_base"] 
+            local_base = dictionary_reverse_lookup(config_file, remote_base) # local base needed for download 
+            full_local_path = local_base + "/" + relative_path # full local path that we pull/push to/from
+            # this informatin is required for pulling/pushing
+
             if relative_path in remote_manifest_data:
-                remote_info = remote_manifest_data[relative_path] # enter the dictionary of the related entry
                 remote_timestamp = remote_info["timestamp"]
                 remote_hash = remote_info["hash"] # grab appropriate information for the remote equivalent
-
+                
                 if current_info["hash"] != remote_hash: # hash difference, main part
                     if current_info["timestamp"] < remote_timestamp: # remote is more recent
-                        retrieve_data(azure_connection, relative_path, )
+                        retrieve_data(azure_connection, relative_path, full_local_path)
                     else: # local is more recent 
                         file_parent = str(Path(relative_path).parent.as_posix()) # don't want a directory for the file
                         create_remote_path(azure_connection, file_parent) # just make sure the path exists 
-                        upload_data(azure_connection, relative_path, )
+                        upload_data(azure_connection, relative_path, full_local_path)
 
             else:
                 file_parent = str(Path(relative_path).parent.as_posix()) # don't want a directory for the file
                 create_remote_path(azure_connection, file_parent) # not in remote manifest, file should be uploaded 
-                upload_data(azure_connection, relative_path, )
+                upload_data(azure_connection, relative_path, full_local_path)
                 
+def dictionary_reverse_lookup(config_file, remote_base): # find a local path based on remote
+    for key, value in config_file.items(): 
+        for entry in value["local_file_path"]: # iterate through the list of paths 
+            if entry["remote"] == remote_base: 
+                    return entry["local"] # return the local value 
+    # basically, grab a remote base and return the associated local path base
 
-                
-                
-
+        
+        
 
 def compare_remote_local():
     print("placeholder")
@@ -201,7 +211,7 @@ azure_connection = ShareClient.from_connection_string(connection_string, share_n
 #     for entry in dictionary_values["local_save_path"]: # iterate through the list 
 #         print(entry["remote"])
 
-read_manifest("manifest.json", azure_connection)
+read_manifest("manifest.json", azure_connection, emulator_list)
 
 
 #push_to_remote(azure_connection, emulator_list)

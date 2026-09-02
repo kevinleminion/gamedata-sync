@@ -30,6 +30,7 @@ def iterate_through_local(file_path, remote_base):
             return_dict[full_remote_path] = {
                 "timestamp": timestamp,
                 "hash": file_hash,
+                "remote_base": remote_base
             }
 
     return return_dict

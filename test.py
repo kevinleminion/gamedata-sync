@@ -150,7 +150,8 @@ def read_manifest(manifest_path, azure_connection, config_file):
         manifest_file_path = script_dir / manifest_path # get the full path to the config file
 
         if not (retrieve_data(azure_connection, "manifest.json", "remote_manifest.json")): # download the remote manifest into a temporary file 
-            print("remote folder doesn't exist, placeholder for now")
+            print("Remote manifest does not exist. Fix this issue.")
+            return
         
         with open(manifest_file_path, "r") as manifest_file: # load the local remote file
             local_manifest_data = json.load(manifest_file)
@@ -158,32 +159,35 @@ def read_manifest(manifest_path, azure_connection, config_file):
             remote_manifest_data = json.load(remote_manifest_file)
 
         for relative_path, current_info in local_manifest_data.items(): # grab info of each local entry
-            remote_info = remote_manifest_data[relative_path] # enter the dictionary of the related entry
-            remote_base = remote_info["remote_base"] 
+            remote_base = current_info["remote_base"]
             local_base = dictionary_reverse_lookup(config_file, remote_base) # local base needed for download 
-            full_local_path = local_base + "/" + relative_path # full local path that we pull/push to/from
-            # this informatin is required for pulling/pushing
+            relative_part = relative_path[len(remote_base) + 1:]
+            full_local_path = local_base + "/" + relative_part # full local path that we pull/push to/from
 
-            if relative_path in remote_manifest_data:
-                remote_timestamp = remote_info["timestamp"]
-                remote_hash = remote_info["hash"] # grab appropriate information for the remote equivalent
-                
-                if current_info["hash"] != remote_hash: # hash difference, main part
-                    if current_info["timestamp"] < remote_timestamp: # remote is more recent
-                        retrieve_data(azure_connection, relative_path, full_local_path)
-                    else: # local is more recent 
-                        file_parent = str(Path(relative_path).parent.as_posix()) # don't want a directory for the file
-                        create_remote_path(azure_connection, file_parent) # just make sure the path exists 
-                        upload_data(azure_connection, relative_path, full_local_path)
-
-            else:
+            if relative_path not in remote_manifest_data: # create the missing file
                 file_parent = str(Path(relative_path).parent.as_posix()) # don't want a directory for the file
                 create_remote_path(azure_connection, file_parent) # not in remote manifest, file should be uploaded 
                 upload_data(azure_connection, relative_path, full_local_path)
+                continue # skip over the iteration
+
+            # otherwise, the file already exists and we can proceed
+            remote_info = remote_manifest_data[relative_path] # enter the dictionary of the related entry
+            remote_timestamp = remote_info["timestamp"]
+            remote_hash = remote_info["hash"] # grab appropriate information for the remote equivalent
+            # this informatin is required for pulling/pushing
+           
+            if current_info["hash"] != remote_hash: # hash difference, main part
+                if current_info["timestamp"] < remote_timestamp: # remote is more recent
+                    retrieve_data(azure_connection, relative_path, full_local_path)
+                else: # local is more recent 
+                    file_parent = str(Path(relative_path).parent.as_posix()) # don't want a directory for the file
+                    create_remote_path(azure_connection, file_parent) # just make sure the path exists 
+                    upload_data(azure_connection, relative_path, full_local_path)
+
                 
 def dictionary_reverse_lookup(config_file, remote_base): # find a local path based on remote
     for key, value in config_file.items(): 
-        for entry in value["local_file_path"]: # iterate through the list of paths 
+        for entry in value["local_save_path"]: # iterate through the list of paths 
             if entry["remote"] == remote_base: 
                     return entry["local"] # return the local value 
     # basically, grab a remote base and return the associated local path base

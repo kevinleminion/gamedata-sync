@@ -183,6 +183,9 @@ def read_manifest(manifest_path, azure_connection, config_file, manifest_lock):
                     file_parent = str(Path(relative_path).parent.as_posix()) # don't want a directory for the file
                     create_remote_path(azure_connection, file_parent) # just make sure the path exists 
                     upload_data(azure_connection, relative_path, full_local_path)
+                    update_manifest(manifest_lock, relative_path, remote_manifest_data, {"timestamp": current_info["timestamp"], "hash": current_info["hash"]})
+
+        return local_manifest_data # return the newly updated local manifest after it is updated
 
 
 # updates the manifest file with any new hashes

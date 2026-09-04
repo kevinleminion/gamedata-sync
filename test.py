@@ -137,33 +137,32 @@ def parse_config_file(config_file_path):
         config_data = json.load(config_file)
     return config_data
 
-# updates the manifest file with any new hashes
-def update_manifest(emulator, new_hash, manifest_lock): # manifest_lock only allows one thread in this block at once
-    with manifest_lock:
-        manifest = read_manifest_file()
-        manifest[emulator] = new_hash
-        write_manifest_file(manifest)
-
-# reads the manifest file, 
-def read_manifest(manifest_path, azure_connection, config_file):
+# reads the manifest file, NOTE: manifest_lock is ONLY used for updating the manifest
+def read_manifest(manifest_path, azure_connection, config_file, manifest_lock):
         script_dir = Path(__file__).parent # get the directory of the script file
         manifest_file_path = script_dir / manifest_path # get the full path to the config file
+        remote_manifest_path = script_dir / "remote_manifest.json"
 
-        if not (retrieve_data(azure_connection, "manifest.json", "remote_manifest.json")): # download the remote manifest into a temporary file 
-            print("Remote manifest does not exist. Fix this issue.")
-            return
+        ########################## OPENING AND READING REMOTE/LOCAL MANIFEST FILES #############################
+        if not (retrieve_data(azure_connection, "manifest.json", remote_manifest_path)): # download the remote manifest into a temporary file 
+            remote_manifest_data = {} # empty dictionary if it doesn't exist
+        else:
+            with open(remote_manifest_path, "r") as remote_manifest_file: # load json if it does exist
+                remote_manifest_data = json.load(remote_manifest_file)
+            remote_manifest_path.unlink() # delete the temporary file, since we don't want to keep the remote
         
         with open(manifest_file_path, "r") as manifest_file: # load the local remote file
             local_manifest_data = json.load(manifest_file)
-        with open("remote_manifest.json", "r") as remote_manifest_file: # loading the remote one as well
-            remote_manifest_data = json.load(remote_manifest_file)
+        
 
         for relative_path, current_info in local_manifest_data.items(): # grab info of each local entry
+            ################ GRABBING REQUIRED INFORMATION #######################
             remote_base = current_info["remote_base"]
             local_base = dictionary_reverse_lookup(config_file, remote_base) # local base needed for download 
-            relative_part = relative_path[len(remote_base) + 1:]
+            relative_part = relative_path[len(remote_base) + 1:] # grab the relative part, trim out the excess from relative_path, including the backslash
             full_local_path = local_base + "/" + relative_part # full local path that we pull/push to/from
 
+            ################## IF LOCAL FILE DOESN'T EXIST ON REMOTE ###################
             if relative_path not in remote_manifest_data: # create the missing file
                 file_parent = str(Path(relative_path).parent.as_posix()) # don't want a directory for the file
                 create_remote_path(azure_connection, file_parent) # not in remote manifest, file should be uploaded 
@@ -179,11 +178,19 @@ def read_manifest(manifest_path, azure_connection, config_file):
             if current_info["hash"] != remote_hash: # hash difference, main part
                 if current_info["timestamp"] < remote_timestamp: # remote is more recent
                     retrieve_data(azure_connection, relative_path, full_local_path)
+                    update_manifest(manifest_lock, relative_path, local_manifest_data, {"timestamp": remote_timestamp, "hash": remote_hash})
                 else: # local is more recent 
                     file_parent = str(Path(relative_path).parent.as_posix()) # don't want a directory for the file
                     create_remote_path(azure_connection, file_parent) # just make sure the path exists 
                     upload_data(azure_connection, relative_path, full_local_path)
 
+
+# updates the manifest file with any new hashes
+# NOTE: ONLY useful when the remote is more recent. When you pull it, the local manifest is now obsolete.
+def update_manifest(manifest_lock, key_to_update, manifest_dictionary, new_value): # manifest_lock only allows one thread in this block at once
+    with manifest_lock:
+        manifest_dictionary[key_to_update] = new_value
+# extremely simple function, updates the matching key with the new value
                 
 def dictionary_reverse_lookup(config_file, remote_base): # find a local path based on remote
     for key, value in config_file.items(): 
@@ -192,11 +199,6 @@ def dictionary_reverse_lookup(config_file, remote_base): # find a local path bas
                     return entry["local"] # return the local value 
     # basically, grab a remote base and return the associated local path base
 
-        
-        
-
-def compare_remote_local():
-    print("placeholder")
 
 ############################### ACTUAL CODE STARTS HERE ###############################
 manifest_lock = Lock() # create a lock object

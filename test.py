@@ -23,7 +23,7 @@ def is_running(program_name):
 # monitor X process to see when it opens and when it closes
 # needs a nested dictionary of information
 # also needs the 'azure_connection' object to connect to Azure
-def monitor_process(program_detail_dict, azure_connection):
+def monitor_process(program_detail_dict, azure_connection, config_file, manifest_lock):
     ############ initial setup, grabbing all the needed parameters #################
     exec_name = program_detail_dict["process_name"] # grabs the executable name
     local_path_list = [] # list for local paths
@@ -33,17 +33,15 @@ def monitor_process(program_detail_dict, azure_connection):
         local_path_list.append(entry["local"]) # fill in the lists, nothing too complex
         remote_path_list.append(entry["remote"])
 
+    updated_manifest = {} # updated manifest, after any potential sync with the remote
+
     while True:
         # waiting for any emulator to open
         while True:
             if is_running(exec_name):
                 # pull remote data on startup
-                for item in remote_path_list:
-                    retrieve_data(azure_connection, item)
-
-                break
-                
-
+                updated_manifest = read_manifest("manifest.json", azure_connection, config_file, manifest_lock)
+                break # break the current while true after everything is loading
             time.sleep(5) #just waits 5 seconds before checking again
 
         # waiting for the emulator to close
@@ -189,7 +187,7 @@ def read_manifest(manifest_path, azure_connection, config_file, manifest_lock):
 
 
 # updates the manifest file with any new hashes
-# NOTE: ONLY useful when the remote is more recent. When you pull it, the local manifest is now obsolete.
+# NOTE: MOSTLY useful when the remote is more recent. When you pull it, the local manifest is now obsolete.
 def update_manifest(manifest_lock, key_to_update, manifest_dictionary, new_value): # manifest_lock only allows one thread in this block at once
     with manifest_lock:
         manifest_dictionary[key_to_update] = new_value

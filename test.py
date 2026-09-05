@@ -26,12 +26,6 @@ def is_running(program_name):
 def monitor_process(program_detail_dict, azure_connection, config_file, manifest_lock):
     ############ initial setup, grabbing all the needed parameters #################
     exec_name = program_detail_dict["process_name"] # grabs the executable name
-    local_path_list = [] # list for local paths
-    remote_path_list = [] # list for remote paths
-    
-    for entry in program_detail_dict["local_save_path"]:
-        local_path_list.append(entry["local"]) # fill in the lists, nothing too complex
-        remote_path_list.append(entry["remote"])
 
     updated_manifest = {} # updated manifest, after any potential sync with the remote
 

@@ -9,6 +9,9 @@ from azure.storage.fileshare import ShareClient # allow writing to an Azure File
 import json # allow for the creation of json files
 import argparse # allows the parsing of command line parameters
 
+import create_manifest # allow you to use functions from create_manifest
+import subprocess # allow the running of create_manifest
+
 
 
 # check if X process is running
@@ -41,7 +44,8 @@ def monitor_process(program_detail_dict, azure_connection, config_file, manifest
         # waiting for the emulator to close
         while True:
             if not is_running(exec_name):
-                print(exec_name + " was closed.")
+                subprocess.run(["python", "create_manifest.py"]) # run create_manifest.py 
+                updated_manifest = read_manifest("manifest.json", azure_connection, config_file, manifest_lock) # update the manifest one more time
                 break
 
             time.sleep(5) # effectively the same code, but to check if it has closed

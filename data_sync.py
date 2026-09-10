@@ -44,7 +44,9 @@ def monitor_process(program_detail_dict, azure_connection, config_file, manifest
         # waiting for the emulator to close
         while True:
             if not is_running(exec_name):
-                subprocess.run(["python", "create_manifest.py"]) # run create_manifest.py 
+                with manifest_lock:
+                    subprocess.run(["python", "create_manifest.py"])
+
                 updated_manifest = read_manifest("manifest.json", azure_connection, config_file, manifest_lock) # update the manifest one more time
                 break
 

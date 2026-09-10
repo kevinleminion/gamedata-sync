@@ -221,13 +221,11 @@ azure_connection = ShareClient.from_connection_string(connection_string, share_n
 read_manifest("manifest.json", azure_connection, emulator_list)
 
 
-#push_to_remote(azure_connection, emulator_list)
+with ThreadPoolExecutor() as executor:
+     for emulator_name, emulator_details in emulator_list.items():
+         executor.submit(monitor_process, emulator_details, azure_connection, config_file, manifest_lock)
 
-# with ThreadPoolExecutor() as executor:
-#     for emulator_name, emulator_details in emulator_list.items():
-#         executor.submit(monitor_process, emulator_details, azure_connection)
-
-# azure_connection.close()
+azure_connection.close()
 
 
 

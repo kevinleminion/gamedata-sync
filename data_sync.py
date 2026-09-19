@@ -240,7 +240,7 @@ futures = []
 with ThreadPoolExecutor() as executor:
     for emulator_name, emulator_details in emulator_list.items():
         print("submitting", emulator_name)
-        future = executor.submit(monitor_process, emulator_details, azure_connection, config_file, manifest_lock)
+        future = executor.submit(monitor_process, emulator_details, azure_connection, emulator_list, manifest_lock)
         futures.append(future)
 
     for future in as_completed(futures):

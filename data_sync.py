@@ -1,6 +1,6 @@
 # this file is for testing the functionality of certain features before they are appended to the main script file
 from pathlib import Path # turns a directory into an object you can iterate through
-from concurrent.futures import ThreadPoolExecutor # allows for the use of threads, so you can call functions non-sequentially
+from concurrent.futures import ThreadPoolExecutor, as_completed # allows for the use of threads, so you can call functions non-sequentially
 import hashlib # allows you to hash files, nothing major
 import psutil # mandatory for checking for open processes
 import time # for simple timer functionality
@@ -45,6 +45,7 @@ def monitor_process(program_detail_dict, azure_connection, config_file, manifest
             if is_running(exec_name):
                 # pull remote data on startup
                 updated_manifest = read_manifest("manifest.json", azure_connection, config_file, manifest_lock)
+                print(exec_name + " was opened!")
                 break # break the current while true after everything is loading
             time.sleep(5) #just waits 5 seconds before checking again
 
@@ -58,6 +59,7 @@ def monitor_process(program_detail_dict, azure_connection, config_file, manifest
                 updated_manifest = read_manifest("manifest.json", azure_connection, config_file, manifest_lock) # update the manifest one more time
                 manifest_file_path = Path(__file__).parent / "manifest.json"
                 upload_data(azure_connection, "manifest.json", manifest_file_path) # upload the file to Azure
+                print(exec_name + " was closed!")
                 break
 
             time.sleep(5) # effectively the same code, but to check if it has closed
@@ -157,12 +159,12 @@ def read_manifest(manifest_path, azure_connection, config_file, manifest_lock):
             with open(remote_manifest_path, "r") as remote_manifest_file: # load json if it does exist
                 remote_manifest_data = json.load(remote_manifest_file)
             remote_manifest_path.unlink() # delete the temporary file, since we don't want to keep the remote
-        
+
         with open(manifest_file_path, "r") as manifest_file: # load the local remote file
             local_manifest_data = json.load(manifest_file)
-        
 
         for relative_path, current_info in local_manifest_data.items(): # grab info of each local entry
+            print("LOOP ENTRY:", relative_path)
             ################ GRABBING REQUIRED INFORMATION #######################
             remote_base = current_info["remote_base"]
             local_base = dictionary_reverse_lookup(config_file, remote_base) # local base needed for download 
@@ -171,6 +173,8 @@ def read_manifest(manifest_path, azure_connection, config_file, manifest_lock):
 
             ################## IF LOCAL FILE DOESN'T EXIST ON REMOTE ###################
             if relative_path not in remote_manifest_data: # create the missing file
+                print("TAKING NEW-FILE BRANCH FOR:", relative_path)
+                print("full_local_path:", full_local_path)
                 file_parent = str(Path(relative_path).parent.as_posix()) # don't want a directory for the file
                 create_remote_path(azure_connection, file_parent) # not in remote manifest, file should be uploaded 
                 upload_data(azure_connection, relative_path, full_local_path)
@@ -183,10 +187,13 @@ def read_manifest(manifest_path, azure_connection, config_file, manifest_lock):
             # this informatin is required for pulling/pushing
            
             if current_info["hash"] != remote_hash: # hash difference, main part
+                print("HASH DIFFERS for:", relative_path)
                 if current_info["timestamp"] < remote_timestamp: # remote is more recent
+                    print("taking PULL branch")
                     retrieve_data(azure_connection, relative_path, full_local_path)
                     update_manifest(manifest_lock, relative_path, local_manifest_data, {"timestamp": remote_timestamp, "hash": remote_hash})
                 else: # local is more recent 
+                    print("taking PUSH branch")
                     file_parent = str(Path(relative_path).parent.as_posix()) # don't want a directory for the file
                     create_remote_path(azure_connection, file_parent) # just make sure the path exists 
                     upload_data(azure_connection, relative_path, full_local_path)
@@ -229,10 +236,15 @@ azure_connection = ShareClient.from_connection_string(connection_string, share_n
 
 read_manifest("manifest.json", azure_connection, emulator_list, manifest_lock)
 
-
+futures = []
 with ThreadPoolExecutor() as executor:
-     for emulator_name, emulator_details in emulator_list.items():
-         executor.submit(monitor_process, emulator_details, azure_connection, config_file, manifest_lock)
+    for emulator_name, emulator_details in emulator_list.items():
+        print("submitting", emulator_name)
+        future = executor.submit(monitor_process, emulator_details, azure_connection, config_file, manifest_lock)
+        futures.append(future)
+
+    for future in as_completed(futures):
+        future.result()  # re-raises the real error here, if one occurred
 
 azure_connection.close()
 

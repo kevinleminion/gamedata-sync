@@ -48,6 +48,8 @@ def monitor_process(program_detail_dict, azure_connection, config_file, manifest
                     subprocess.run(["python", "create_manifest.py"])
 
                 updated_manifest = read_manifest("manifest.json", azure_connection, config_file, manifest_lock) # update the manifest one more time
+                manifest_file_path = Path(__file__).parent / "manifest.json"
+                upload_data(azure_connection, "manifest.json", manifest_file_path) # upload the file to Azure
                 break
 
             time.sleep(5) # effectively the same code, but to check if it has closed

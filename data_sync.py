@@ -45,7 +45,8 @@ def monitor_process(program_detail_dict, azure_connection, config_file, manifest
         while True:
             if not is_running(exec_name):
                 with manifest_lock:
-                    subprocess.run(["python", "create_manifest.py"])
+                    create_manifest_path = str(Path(__file__).parent / "create_manifest.py")
+                    subprocess.run(["python", create_manifest_path]) # make sure the filepath stays consistent 
 
                 updated_manifest = read_manifest("manifest.json", azure_connection, config_file, manifest_lock) # update the manifest one more time
                 manifest_file_path = Path(__file__).parent / "manifest.json"

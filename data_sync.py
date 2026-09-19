@@ -11,8 +11,15 @@ import argparse # allows the parsing of command line parameters
 
 import create_manifest # allow you to use functions from create_manifest
 import subprocess # allow the running of create_manifest
+import socket
 
-
+# simple function to determine if there is a wifi connection
+def is_connected():
+    try:
+        socket.create_connection(("8.8.8.8", 53), timeout=3) # connect to the public Google DNS server
+        return True
+    except:
+        return False
 
 # check if X process is running
 def is_running(program_name):

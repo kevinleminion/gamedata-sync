@@ -1,3 +1,5 @@
 config.json
 manifest.json
 run_sync.bat
+remote_manifest.json
+__pycache__

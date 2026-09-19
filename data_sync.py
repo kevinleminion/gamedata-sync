@@ -73,7 +73,6 @@ def create_remote_path(azure_connection, remote_path):
         else:
             current_path = current_path + "/" + part # otherwise simply append each part whilst including the '/'
 
-        print(current_path)
         azure_directory = azure_connection.get_directory_client(current_path) # use to grab a client handle
         try:
             azure_directory.create_directory() # use the client handle to create a path
@@ -228,7 +227,7 @@ azure_connection = ShareClient.from_connection_string(connection_string, share_n
 #     for entry in dictionary_values["local_save_path"]: # iterate through the list 
 #         print(entry["remote"])
 
-read_manifest("manifest.json", azure_connection, emulator_list)
+read_manifest("manifest.json", azure_connection, emulator_list, manifest_lock)
 
 
 with ThreadPoolExecutor() as executor:

@@ -117,10 +117,14 @@ def push_to_remote(azure_connection, emulator_dictionary):
 
 # uploading data to Azure
 def upload_data(azure_connection, target_file, to_write):
-    file_client = azure_connection.get_file_client(target_file) # connect to the target file 
-
-    with open(to_write, "rb") as write_file:
-        file_client.upload_file(write_file)
+    try:
+        file_client = azure_connection.get_file_client(target_file)
+        with open(to_write, "rb") as write_file:
+            file_client.upload_file(write_file)
+        return True
+    except Exception as e:
+        print("UPLOAD_DATA FAILED:", e)
+        return False
 
 # given all the folder paths from the JSON
 # loop through the directories associated with said paths
@@ -162,7 +166,8 @@ def retrieve_data(azure_connection, target_file, local_to_write):
             data.readinto(source_file) # writes into source_file
         return True
         
-    except Exception:
+    except Exception as e:
+        print("RETRIEVE_DATA FAILED:", e)
         return False 
 
 # turns a config into a working dictionary

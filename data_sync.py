@@ -62,6 +62,10 @@ def monitor_process(program_detail_dict, azure_connection, config_file, manifest
         while True:
             if is_running(exec_name):
                 # pull remote data on startup
+                with manifest_lock:
+                    create_manifest_path = str(Path(__file__).parent / "create_manifest.py")
+                    subprocess.run(["python", create_manifest_path])
+                    
                 updated_manifest = read_manifest("manifest.json", azure_connection, config_file, manifest_lock)
                 print(exec_name + " was opened!")
                 break # break the current while true after everything is loading

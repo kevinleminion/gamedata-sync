@@ -232,6 +232,24 @@ def read_manifest(manifest_path, azure_connection, config_file, manifest_lock):
                     retry_azure_call(upload_data, azure_connection, relative_path, full_local_path)
                     update_manifest(manifest_lock, relative_path, remote_manifest_data, {"timestamp": current_info["timestamp"], "hash": current_info["hash"]})
 
+        # Write data from the remote into the local
+        for relative_path, remote_info in remote_manifest_data.items():
+            if relative_path not in local_manifest_data:
+                print("TAKING REMOTE-ONLY BRANCH FOR:", relative_path)
+                remote_base = remote_info["remote_base"]
+                local_base = dictionary_reverse_lookup(config_file, remote_base)
+                relative_part = relative_path[len(remote_base) + 1:]
+                full_local_path = local_base + "/" + relative_part
+
+                Path(full_local_path).parent.mkdir(parents=True, exist_ok=True)  # the folder likely doesn't exist yet locally at all
+
+                if retry_azure_call(retrieve_data, azure_connection, relative_path, full_local_path):
+                    update_manifest(manifest_lock, relative_path, local_manifest_data, {
+                        "timestamp": remote_info["timestamp"],
+                        "hash": remote_info["hash"],
+                        "remote_base": remote_base
+                    })
+
         return local_manifest_data # return the newly updated local manifest after it is updated
 
 

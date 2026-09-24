@@ -13,6 +13,8 @@ import create_manifest # allow you to use functions from create_manifest
 import subprocess # allow the running of create_manifest
 import socket
 
+from plyer import notification
+
 # simple function to determine if there is a wifi connection
 def is_connected():
     try:
@@ -20,6 +22,22 @@ def is_connected():
         return True
     except:
         return False
+
+# retries any Azure Call in the case that something goes wrong
+def retry_azure_call(func, *args, max_attempts=5, retry_delay=60):
+    for attempt in range(1, max_attempts + 1): # try up to 5 times, minute delay in between 
+        if not is_connected():
+            print("No internet connection, waiting...")
+            time.sleep(retry_delay)
+            continue
+
+        if func(*args): # checks for a return from a function
+            return True 
+
+        print(f"Attempt {attempt}/{max_attempts} failed, retrying...")
+        time.sleep(retry_delay)
+
+    return False
 
 # check if X process is running
 def is_running(program_name):
@@ -58,8 +76,14 @@ def monitor_process(program_detail_dict, azure_connection, config_file, manifest
 
                 updated_manifest = read_manifest("manifest.json", azure_connection, config_file, manifest_lock) # update the manifest one more time
                 manifest_file_path = Path(__file__).parent / "manifest.json"
-                upload_data(azure_connection, "manifest.json", manifest_file_path) # upload the file to Azure
+                retry_azure_call(upload_data, azure_connection, "manifest.json", manifest_file_path) # upload the file to Azure
                 print(exec_name + " was closed!")
+
+                notification.notify( # notification for a successful sync
+                    title="Sync Complete",
+                    message=exec_name + " saves synced successfully",
+                    timeout=5
+                )
                 break
 
             time.sleep(5) # effectively the same code, but to check if it has closed
@@ -153,7 +177,7 @@ def read_manifest(manifest_path, azure_connection, config_file, manifest_lock):
         remote_manifest_path = script_dir / "remote_manifest.json"
 
         ########################## OPENING AND READING REMOTE/LOCAL MANIFEST FILES #############################
-        if not (retrieve_data(azure_connection, "manifest.json", remote_manifest_path)): # download the remote manifest into a temporary file 
+        if not retry_azure_call(retrieve_data, azure_connection, "manifest.json", remote_manifest_path): # download the remote manifest into a temporary file 
             remote_manifest_data = {} # empty dictionary if it doesn't exist
         else:
             with open(remote_manifest_path, "r") as remote_manifest_file: # load json if it does exist
@@ -177,7 +201,7 @@ def read_manifest(manifest_path, azure_connection, config_file, manifest_lock):
                 print("full_local_path:", full_local_path)
                 file_parent = str(Path(relative_path).parent.as_posix()) # don't want a directory for the file
                 create_remote_path(azure_connection, file_parent) # not in remote manifest, file should be uploaded 
-                upload_data(azure_connection, relative_path, full_local_path)
+                retry_azure_call(upload_data, azure_connection, relative_path, full_local_path)
                 continue # skip over the iteration
 
             # otherwise, the file already exists and we can proceed
@@ -190,13 +214,13 @@ def read_manifest(manifest_path, azure_connection, config_file, manifest_lock):
                 print("HASH DIFFERS for:", relative_path)
                 if current_info["timestamp"] < remote_timestamp: # remote is more recent
                     print("taking PULL branch")
-                    retrieve_data(azure_connection, relative_path, full_local_path)
+                    retry_azure_call(retrieve_data, azure_connection, relative_path, full_local_path)
                     update_manifest(manifest_lock, relative_path, local_manifest_data, {"timestamp": remote_timestamp, "hash": remote_hash})
                 else: # local is more recent 
                     print("taking PUSH branch")
                     file_parent = str(Path(relative_path).parent.as_posix()) # don't want a directory for the file
                     create_remote_path(azure_connection, file_parent) # just make sure the path exists 
-                    upload_data(azure_connection, relative_path, full_local_path)
+                    retry_azure_call(upload_data, azure_connection, relative_path, full_local_path)
                     update_manifest(manifest_lock, relative_path, remote_manifest_data, {"timestamp": current_info["timestamp"], "hash": current_info["hash"]})
 
         return local_manifest_data # return the newly updated local manifest after it is updated

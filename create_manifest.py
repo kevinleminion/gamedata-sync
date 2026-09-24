@@ -44,7 +44,10 @@ for emulator_name, emulator_values in emulator_data.items():
     for entry in emulator_values["local_save_path"]:
         manifest_dictionary.update(iterate_through_local(entry["local"], entry["remote"])) # add a key pair value for each entry
 
-with open("manifest.json", "w") as file:
-    json.dump(manifest_dictionary, file, indent = 4) # turn the dictionary into a json
-    # indent = 4 makes it easier to read
+script_dir = Path(__file__).parent
+manifest_output_path = script_dir / "manifest.json"
+
+with open(manifest_output_path, "w") as file:
+    json.dump(manifest_dictionary, file, indent=4)
+
 

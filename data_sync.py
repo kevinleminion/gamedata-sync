@@ -138,6 +138,7 @@ def loop_through_directory(emulator_path, remote_path, azure_connection):
             upload_data(azure_connection, full_remote_path, file) # test uploading the data
 
 # function to go through each folder on the remote
+# near identical to loop_through_directory, just on the remote
 def iterate_through_remote(azure_connection, remote_path, local_path):
     # needs to take the current path to determine where to write the file
     directory_handle = azure_connection.get_directory_client(remote_path) # start at the root of the directory
@@ -164,6 +165,7 @@ def retrieve_data(azure_connection, target_file, local_to_write):
     except Exception:
         return False 
 
+# turns a config into a working dictionary
 def parse_config_file(config_file_path):
     script_dir = Path(__file__).parent # get the directory of the script file
     config_file_path = script_dir / config_file_path # get the full path to the config file

@@ -79,11 +79,13 @@ def monitor_process(program_detail_dict, azure_connection, config_file, manifest
                 retry_azure_call(upload_data, azure_connection, "manifest.json", manifest_file_path) # upload the file to Azure
                 print(exec_name + " was closed!")
 
-                notification.notify( # notification for a successful sync
-                    title="Sync Complete",
-                    message=exec_name + " saves synced successfully",
-                    timeout=5
-                )
+                sync_success = retry_azure_call(upload_data, azure_connection, "manifest.json", manifest_file_path)
+
+                if sync_success: # notification based on success
+                    notification.notify(title="Sync Complete", message=exec_name + " saves synced successfully", timeout=5)
+                else:
+                    notification.notify(title="Sync Failed", message=exec_name + " could not sync — check your connection", timeout=5)
+
                 break
 
             time.sleep(5) # effectively the same code, but to check if it has closed

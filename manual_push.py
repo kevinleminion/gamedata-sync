@@ -4,6 +4,7 @@
 from pathlib import Path
 from azure.storage.fileshare import ShareClient
 import json
+from plyer import notification
 
 # turns a config into a working dictionary
 def parse_config_file(config_file_path):
@@ -72,3 +73,5 @@ azure_connection = ShareClient.from_connection_string(connection_string, share_n
 for dictionary_keys, dictionary_values in emulator_list.items():
     for entry in dictionary_values["local_save_path"]: # iterate through the list 
         loop_through_directory(entry["local"], entry["remote"], azure_connection)
+
+notification.notify(title="Remote Sync", message="Save Data pushed to Azure remote.", timeout=5)
